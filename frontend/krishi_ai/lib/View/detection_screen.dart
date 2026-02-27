@@ -2,12 +2,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:krishi_ai/View/home_screen.dart';
+import 'package:krishi_ai/View/debug_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final File imageFile;
   final String diseaseName;
   final String confidence;
   final String treatment;
+  final String? dosage;
+  final String? prevention;
+  final bool? isHealthy;
+  final String? label;
+  final Map<String, String>? allPredictions;
 
   const ResultScreen({
     super.key,
@@ -15,6 +21,11 @@ class ResultScreen extends StatelessWidget {
     required this.diseaseName,
     required this.confidence,
     required this.treatment,
+    this.dosage,
+    this.prevention,
+    this.isHealthy,
+    this.label,
+    this.allPredictions,
   });
 
   @override
@@ -46,6 +57,29 @@ class ResultScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DebugScreen(
+                    imageFile: imageFile,
+                    analysisResult: {
+                      'label': label ?? 'unknown',
+                      'confidence': confidence,
+                      'disease_name': diseaseName,
+                      'treatment': treatment,
+                      'dosage': dosage,
+                      'prevention': prevention,
+                      'is_healthy': isHealthy,
+                      'all_predictions': allPredictions ?? {},
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.share, color: Colors.white),
             onPressed: () {
@@ -83,12 +117,20 @@ class ResultScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.check_circle, color: primary, size: 16),
+                          Icon(
+                            isHealthy == true
+                                ? Icons.check_circle
+                                : Icons.warning,
+                            color: isHealthy == true ? Colors.green : primary,
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
                           Text(
-                            "Detection Success",
+                            isHealthy == true
+                                ? "Healthy Crop"
+                                : "Disease Detected",
                             style: GoogleFonts.spaceGrotesk(
-                              color: primary,
+                              color: isHealthy == true ? Colors.green : primary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -104,14 +146,15 @@ class ResultScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        "Phytophthora infestans",
-                        style: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey,
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
+                      if (label != null)
+                        Text(
+                          label!.replaceAll('_', ' '),
+                          style: GoogleFonts.spaceGrotesk(
+                            color: Colors.grey,
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -124,8 +167,10 @@ class ResultScreen extends StatelessWidget {
                           width: 56,
                           height: 56,
                           child: CircularProgressIndicator(
-                            value: 0.98,
-                            color: primary,
+                            value:
+                                double.parse(confidence.replaceAll('%', '')) /
+                                100,
+                            color: isHealthy == true ? Colors.green : primary,
                             strokeWidth: 4,
                             backgroundColor: Colors.grey[800],
                           ),
@@ -133,7 +178,7 @@ class ResultScreen extends StatelessWidget {
                         Text(
                           confidence,
                           style: GoogleFonts.spaceGrotesk(
-                            color: primary,
+                            color: isHealthy == true ? Colors.green : primary,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -156,63 +201,121 @@ class ResultScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Treatment Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: primary.withValues(alpha: 0.18)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.medication, color: primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Recommended Treatment",
-                        style: GoogleFonts.spaceGrotesk(
-                          color: primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+            if (isHealthy != true) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: primary.withValues(alpha: 0.18)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.medication, color: primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Recommended Treatment",
+                          style: GoogleFonts.spaceGrotesk(
+                            color: primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    treatment,
-                    style: GoogleFonts.spaceGrotesk(
-                      color: Colors.white,
-                      fontSize: 14,
-                      height: 1.5,
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      treatment,
+                      style: GoogleFonts.spaceGrotesk(
+                        color: Colors.white,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Symptoms Section
-            _buildInfoCard(
-              icon: Icons.warning_amber,
-              title: "Common Symptoms",
-              content:
-                  "• Dark brown spots on leaves\n• White fungal growth on undersides\n• Rapid leaf decay in humid conditions\n• Stem lesions and fruit rot",
-              primary: primary,
-            ),
-            const SizedBox(height: 16),
+              // Dosage Section
+              if (dosage != null &&
+                  dosage != "Not applicable" &&
+                  dosage != "Not available")
+                _buildInfoCard(
+                  icon: Icons.local_pharmacy,
+                  title: "Dosage Information",
+                  content: dosage!,
+                  primary: primary,
+                ),
+              if (dosage != null &&
+                  dosage != "Not applicable" &&
+                  dosage != "Not available")
+                const SizedBox(height: 16),
+            ] else ...[
+              // Healthy crop message
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.eco, color: Colors.green),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Healthy Crop Detected",
+                          style: GoogleFonts.spaceGrotesk(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Your crop appears to be healthy! Continue with regular care and monitoring.",
+                      style: GoogleFonts.spaceGrotesk(
+                        color: Colors.white,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Prevention Section
-            _buildInfoCard(
-              icon: Icons.shield,
-              title: "Prevention Tips",
-              content:
-                  "• Use disease-resistant varieties\n• Ensure proper spacing for air circulation\n• Avoid overhead watering\n• Remove infected plant debris",
-              primary: primary,
-            ),
-            const SizedBox(height: 20),
+            if (prevention != null)
+              _buildInfoCard(
+                icon: Icons.shield,
+                title: "Prevention Tips",
+                content: prevention!,
+                primary: primary,
+              ),
+            if (prevention != null) const SizedBox(height: 16),
+
+            // Symptoms Section (only for diseased crops)
+            if (isHealthy != true)
+              _buildInfoCard(
+                icon: Icons.warning_amber,
+                title: "Common Symptoms",
+                content: _getSymptoms(label ?? ''),
+                primary: primary,
+              ),
+            if (isHealthy != true) const SizedBox(height: 20),
 
             // Market Locator Button
             Container(
@@ -400,6 +503,38 @@ class ResultScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getSymptoms(String label) {
+    final symptomsMap = {
+      'Pepper__bell___Bacterial_spot':
+          '• Small, dark brown spots on leaves\n• Yellow halos around spots\n• Leaf drop and defoliation\n• Fruit lesions with raised edges',
+      'Potato___Early_blight':
+          '• Dark brown spots with concentric rings\n• Yellow halos around lesions\n• Leaf yellowing and drop\n• Stem and tuber lesions',
+      'Potato___Late_blight':
+          '• Dark brown to black lesions\n• White fungal growth on leaf undersides\n• Rapid leaf decay in humid conditions\n• Stem and tuber rot',
+      'Tomato_Bacterial_spot':
+          '• Small, dark brown spots on leaves\n• Yellow halos around spots\n• Fruit spots with raised, rough texture\n• Leaf drop in severe cases',
+      'Tomato_Early_blight':
+          '• Dark brown spots with concentric rings\n• Target-like lesions on leaves\n• Yellowing and defoliation\n• Stem cankers near soil line',
+      'Tomato_Late_blight':
+          '• Dark brown to black lesions\n• White fungal growth on undersides\n• Rapid leaf decay in humid conditions\n• Stem lesions and fruit rot',
+      'Tomato_Leaf_Mold':
+          '• Yellow spots on upper leaf surface\n• Olive-green to brown fuzzy growth underneath\n• Leaf curling and yellowing\n• Reduced fruit quality',
+      'Tomato_Septoria_leaf_spot':
+          '• Small, circular spots with dark borders\n• Gray centers with tiny black specks\n• Lower leaves affected first\n• Progressive defoliation',
+      'Tomato_Spider_mites_Two_spotted_spider_mite':
+          '• Fine webbing on leaves\n• Yellow stippling on leaf surface\n• Leaves become bronze or yellow\n• Tiny moving dots on undersides',
+      'Tomato__Target_Spot':
+          '• Brown spots with concentric rings\n• Target-like appearance\n• Leaf yellowing and drop\n• Fruit lesions with dark centers',
+      'Tomato__Tomato_YellowLeaf__Curl_Virus':
+          '• Upward curling of leaves\n• Yellow leaf margins\n• Stunted plant growth\n• Reduced fruit production',
+      'Tomato__Tomato_mosaic_virus':
+          '• Mottled light and dark green patterns\n• Leaf distortion and curling\n• Stunted growth\n• Reduced fruit quality',
+    };
+
+    return symptomsMap[label] ??
+        '• Observe any unusual discoloration\n• Check for spots or lesions\n• Monitor plant growth patterns\n• Look for signs of pest activity';
   }
 }
 

@@ -1,0 +1,291 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:krishi_ai/View/detection_screen.dart';
+
+class CameraScreen extends StatefulWidget {
+  const CameraScreen({super.key});
+
+  @override
+  State<CameraScreen> createState() => _CameraScreenState();
+}
+
+class _CameraScreenState extends State<CameraScreen> {
+  final Color primary = const Color(0xFF59F20D);
+  final Color backgroundDark = const Color(0xFF0A0F08);
+
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
+  bool _showOptions = true;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      _openCamera();
+    } else if (status.isPermanentlyDenied) {
+      if (mounted) {
+        _showPermissionDialog();
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Camera permission is required")),
+        );
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2923),
+        title: Text(
+          "Camera Permission Required",
+          style: GoogleFonts.spaceGrotesk(color: Colors.white),
+        ),
+        content: Text(
+          "Please enable camera permission in settings to scan crop diseases.",
+          style: GoogleFonts.spaceGrotesk(color: Colors.grey[400]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey[400])),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(context);
+            },
+            child: Text("Open Settings", style: TextStyle(color: primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openCamera() async {
+    try {
+      setState(() => _showOptions = false);
+
+      final XFile? xfile = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 2000,
+      );
+
+      if (xfile == null) {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+        return;
+      }
+
+      final File file = File(xfile.path);
+      setState(() => _isLoading = true);
+
+      final analysis = await _analyzeImage(file);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResultScreen(
+            imageFile: file,
+            diseaseName: analysis["diseaseName"],
+            confidence: analysis["confidence"],
+            treatment: analysis["treatment"],
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Camera Error: $e")));
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  Future<void> _openGallery() async {
+    try {
+      setState(() => _showOptions = false);
+
+      final XFile? xfile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 2000,
+      );
+
+      if (xfile == null) {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+        return;
+      }
+
+      final File file = File(xfile.path);
+      setState(() => _isLoading = true);
+
+      final analysis = await _analyzeImage(file);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResultScreen(
+            imageFile: file,
+            diseaseName: analysis["diseaseName"],
+            confidence: analysis["confidence"],
+            treatment: analysis["treatment"],
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gallery Error: $e")));
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  // 🧠 Fake analysis (you can connect ML model later)
+  Future<Map<String, dynamic>> _analyzeImage(File image) async {
+    await Future.delayed(const Duration(seconds: 2));
+    return {
+      "diseaseName": "Tomato Late Blight",
+      "confidence": "98%",
+      "treatment": "Apply copper-based fungicide and remove infected leaves.",
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: backgroundDark,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1E2923),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            "Scan Crop Disease",
+            style: GoogleFonts.spaceGrotesk(
+              color: primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Stack(
+          children: [
+            if (_showOptions)
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.camera_alt_rounded, color: primary, size: 80),
+                    const SizedBox(height: 30),
+                    Text(
+                      "Choose an option",
+                      style: GoogleFonts.spaceGrotesk(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    _buildOptionButton(
+                      icon: Icons.camera_alt,
+                      label: "Take Photo",
+                      onTap: _requestCameraPermission,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildOptionButton(
+                      icon: Icons.photo_library,
+                      label: "Choose from Gallery",
+                      onTap: _openGallery,
+                    ),
+                  ],
+                ),
+              ),
+            if (_isLoading)
+              Container(
+                color: Colors.black.withValues(alpha: 0.85),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: primary, strokeWidth: 4),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Analyzing Crop Disease...",
+                        style: GoogleFonts.spaceGrotesk(
+                          color: primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 280,
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E2923),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: primary, size: 28),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: GoogleFonts.spaceGrotesk(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

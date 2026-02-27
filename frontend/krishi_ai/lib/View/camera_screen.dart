@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:krishi_ai/View/detection_screen.dart';
+import 'package:krishi_ai/services/crop_detection_service.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -23,6 +24,24 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void initState() {
     super.initState();
+    // Initialize the crop detection service
+    _initializeModel();
+  }
+
+  Future<void> _initializeModel() async {
+    try {
+      await CropDetectionService.initialize();
+    } catch (e) {
+      print('Failed to initialize model: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load AI model: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _requestCameraPermission() async {
@@ -106,6 +125,11 @@ class _CameraScreenState extends State<CameraScreen> {
             diseaseName: analysis["diseaseName"],
             confidence: analysis["confidence"],
             treatment: analysis["treatment"],
+            dosage: analysis["dosage"],
+            prevention: analysis["prevention"],
+            isHealthy: analysis["isHealthy"],
+            label: analysis["label"],
+            allPredictions: analysis["all_predictions"] as Map<String, String>?,
           ),
         ),
       );
@@ -152,6 +176,11 @@ class _CameraScreenState extends State<CameraScreen> {
             diseaseName: analysis["diseaseName"],
             confidence: analysis["confidence"],
             treatment: analysis["treatment"],
+            dosage: analysis["dosage"],
+            prevention: analysis["prevention"],
+            isHealthy: analysis["isHealthy"],
+            label: analysis["label"],
+            allPredictions: analysis["all_predictions"] as Map<String, String>?,
           ),
         ),
       );
@@ -165,14 +194,34 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // 🧠 Fake analysis (you can connect ML model later)
+  // Real AI analysis using TensorFlow Lite model
   Future<Map<String, dynamic>> _analyzeImage(File image) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return {
-      "diseaseName": "Tomato Late Blight",
-      "confidence": "98%",
-      "treatment": "Apply copper-based fungicide and remove infected leaves.",
-    };
+    try {
+      final result = await CropDetectionService.detectDisease(image);
+
+      return {
+        "diseaseName": result['disease_name'],
+        "confidence": "${result['confidence']}%",
+        "treatment": result['treatment'],
+        "dosage": result['dosage'],
+        "prevention": result['prevention'],
+        "isHealthy": result['is_healthy'],
+        "label": result['label'],
+      };
+    } catch (e) {
+      print('Analysis error: $e');
+      // Fallback to mock data if model fails
+      return {
+        "diseaseName": "Analysis Failed",
+        "confidence": "0%",
+        "treatment":
+            "Unable to analyze image. Please try again with a clearer photo of the crop leaf.",
+        "dosage": "Not available",
+        "prevention": "Ensure good lighting and focus when taking photos.",
+        "isHealthy": false,
+        "label": "unknown",
+      };
+    }
   }
 
   @override
