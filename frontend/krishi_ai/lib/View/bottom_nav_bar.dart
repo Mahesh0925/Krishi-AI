@@ -2,6 +2,9 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:krishi_ai/View/camera_screen.dart';
 import 'package:krishi_ai/View/home_screen.dart';
+import 'package:krishi_ai/View/land_measure_screen.dart';
+import 'package:krishi_ai/View/market_screen.dart';
+import 'package:krishi_ai/View/profile_setting.dart';
 
 class KrishiBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -49,29 +52,29 @@ class KrishiBottomNav extends StatelessWidget {
             );
             break;
           case 1:
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (_) => const MeasureFarmAreaScreen()),
-            // );
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LandMeasureScreen()),
+            );
             break;
           case 2:
-            Navigator.push(
+            Navigator.push( 
               context,
               MaterialPageRoute(builder: (_) => const CameraScreen()),
             );
             break;
-          // case 3:
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(builder: (_) => const MarketScreen()),
-          //   );
-          //   break;
-          // case 4:
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(builder: (_) => const ProfileSettingsScreen()),
-          //   );
-          //   break;
+          case 3:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MarketScreen()),
+            );
+            break;
+          case 4:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileSettingsScreen()),
+            );
+            break;
         }
       },
     );
