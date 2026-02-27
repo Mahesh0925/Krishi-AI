@@ -25,7 +25,7 @@ class KrishiBottomNav extends StatelessWidget {
       items: const [
         Icon(Icons.home_outlined, size: 30, color: Colors.white), // 🏠 Home
         Icon(
-          Icons.groups_outlined,
+          Icons.location_on_outlined,
           size: 30,
           color: Colors.white,
         ), // 👥 Community
@@ -58,7 +58,7 @@ class KrishiBottomNav extends StatelessWidget {
             );
             break;
           case 2:
-            Navigator.push( 
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CameraScreen()),
             );

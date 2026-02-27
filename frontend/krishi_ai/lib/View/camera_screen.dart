@@ -94,6 +94,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _openCamera() async {
     try {
+      print('=== CAMERA: Opening camera ===');
       setState(() => _showOptions = false);
 
       final XFile? xfile = await _picker.pickImage(
@@ -103,6 +104,7 @@ class _CameraScreenState extends State<CameraScreen> {
       );
 
       if (xfile == null) {
+        print('=== CAMERA: No image selected ===');
         if (mounted) {
           Navigator.pop(context);
         }
@@ -110,12 +112,20 @@ class _CameraScreenState extends State<CameraScreen> {
       }
 
       final File file = File(xfile.path);
+      print('=== CAMERA: Image captured ===');
+      print('File path: ${file.path}');
+      print('File exists: ${await file.exists()}');
+      print('File size: ${await file.length()} bytes');
+
       setState(() => _isLoading = true);
 
       final analysis = await _analyzeImage(file);
 
       if (!mounted) return;
       setState(() => _isLoading = false);
+
+      print('=== CAMERA: Navigating to result screen ===');
+      print('Analysis data: $analysis');
 
       Navigator.pushReplacement(
         context,
@@ -133,7 +143,10 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('=== CAMERA: Error in _openCamera ===');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -197,9 +210,23 @@ class _CameraScreenState extends State<CameraScreen> {
   // Real AI analysis using TensorFlow Lite model
   Future<Map<String, dynamic>> _analyzeImage(File image) async {
     try {
+      print('=== CAMERA SCREEN: Starting disease detection ===');
+      print('Image path: ${image.path}');
+
       final result = await CropDetectionService.detectDisease(image);
 
-      return {
+      print('=== CAMERA SCREEN: Detection result received ===');
+      print('Result type: ${result.runtimeType}');
+      print('Result keys: ${result.keys.toList()}');
+      print('Full result: $result');
+
+      // Validate result has required fields
+      if (!result.containsKey('disease_name') ||
+          !result.containsKey('treatment')) {
+        throw Exception('Result missing required fields: $result');
+      }
+
+      final mappedResult = {
         "diseaseName": result['disease_name'],
         "confidence": "${result['confidence']}%",
         "treatment": result['treatment'],
@@ -208,10 +235,19 @@ class _CameraScreenState extends State<CameraScreen> {
         "isHealthy": result['is_healthy'],
         "label": result['label'],
       };
-    } catch (e) {
-      print('Analysis error: $e');
+
+      print('=== CAMERA SCREEN: Mapped result for UI ===');
+      print('Mapped result: $mappedResult');
+      print('Disease name being passed: ${mappedResult["diseaseName"]}');
+      print('Treatment being passed: ${mappedResult["treatment"]}');
+
+      return mappedResult;
+    } catch (e, stackTrace) {
+      print('=== CAMERA SCREEN: Analysis error ===');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
       // Fallback to mock data if model fails
-      return {
+      final fallbackResult = {
         "diseaseName": "Analysis Failed",
         "confidence": "0%",
         "treatment":
@@ -221,6 +257,9 @@ class _CameraScreenState extends State<CameraScreen> {
         "isHealthy": false,
         "label": "unknown",
       };
+
+      print('Returning fallback result: $fallbackResult');
+      return fallbackResult;
     }
   }
 
