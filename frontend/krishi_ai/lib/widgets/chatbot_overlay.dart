@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:krishi_ai/services/chatbot_service.dart';
 
 class ChatbotOverlay {
   static OverlayEntry? _overlayEntry;
@@ -88,8 +89,19 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
     _textController.clear();
     _scrollToBottom();
 
-    // Get bot response
-    final response = await getChatbotResponse(text);
+    // Build conversation history
+    final history = _messages
+        .where((msg) => msg != _messages.last) // Exclude the current message
+        .map(
+          (msg) => {
+            'role': msg.isUser ? 'user' : 'assistant',
+            'content': msg.text,
+          },
+        )
+        .toList();
+
+    // Get bot response from backend
+    final response = await ChatbotService.chatWithBot(text, history: history);
 
     setState(() {
       _messages.add(
@@ -486,28 +498,4 @@ class ChatMessage {
     required this.isUser,
     required this.timestamp,
   });
-}
-
-// Placeholder chatbot response function
-Future<String> getChatbotResponse(String query) async {
-  await Future.delayed(const Duration(seconds: 1));
-
-  final lowerQuery = query.toLowerCase();
-
-  if (lowerQuery.contains('disease') || lowerQuery.contains('pest')) {
-    return "I can help you identify crop diseases! You can use the scanner feature to take a photo of affected leaves. Common diseases include Late Blight, Leaf Spot, and Powdery Mildew.";
-  } else if (lowerQuery.contains('weather')) {
-    return "The current weather in your area is displayed on the home screen. I recommend checking it before planning irrigation or pesticide application.";
-  } else if (lowerQuery.contains('fertilizer') ||
-      lowerQuery.contains('nutrient')) {
-    return "For fertilizer recommendations, I suggest using our Fertilizer Calculator. It helps determine the right NPK ratio based on your soil type and crop.";
-  } else if (lowerQuery.contains('price') || lowerQuery.contains('mandi')) {
-    return "You can check live mandi prices in the Market section. Prices are updated daily for major crops in your region.";
-  } else if (lowerQuery.contains('hello') || lowerQuery.contains('hi')) {
-    return "Hello! How can I assist you with your farming needs today?";
-  } else if (lowerQuery.contains('help')) {
-    return "I can help you with:\n• Crop disease identification\n• Weather updates\n• Fertilizer recommendations\n• Market prices\n• Farming tips\n\nWhat would you like to know?";
-  } else {
-    return "That's an interesting question! I'm here to help with crop diseases, weather, fertilizers, and market prices. Could you please be more specific?";
-  }
 }
