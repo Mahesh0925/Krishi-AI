@@ -1,0 +1,92 @@
+{
+    "Pepper__bell___Bacterial_spot": {
+        "disease_name": "Bacterial Spot (Bell Pepper)",
+        "treatment": "Spray copper-based bactericides weekly. Remove infected leaves immediately.",
+        "dosage": "Copper fungicide 2-3 grams per liter of water, spray every 7 days.",
+        "prevention": "Use certified disease-free seeds, avoid overhead irrigation, maintain field hygiene."
+    },
+    "Pepper__bell___healthy": {
+        "disease_name": "Healthy Bell Pepper",
+        "treatment": "No treatment required.",
+        "dosage": "Not applicable.",
+        "prevention": "Maintain proper watering, balanced fertilization, and regular monitoring."
+    },
+    "Potato___Early_blight": {
+        "disease_name": "Early Blight (Potato)",
+        "treatment": "Apply fungicides containing chlorothalonil or mancozeb.",
+        "dosage": "Mancozeb 2-2.5 grams per liter every 7-10 days.",
+        "prevention": "Rotate crops yearly and remove infected debris."
+    },
+    "Potato___Late_blight": {
+        "disease_name": "Late Blight (Potato)",
+        "treatment": "Use systemic fungicides like metalaxyl.",
+        "dosage": "Metalaxyl 2 grams per liter every 7 days during outbreak.",
+        "prevention": "Ensure good drainage and avoid excess moisture."
+    },
+    "Potato___healthy": {
+        "disease_name": "Healthy Potato",
+        "treatment": "No treatment required.",
+        "dosage": "Not applicable.",
+        "prevention": "Use certified seed tubers and proper spacing."
+    },
+    "Tomato_Bacterial_spot": {
+        "disease_name": "Bacterial Spot (Tomato)",
+        "treatment": "Spray copper-based bactericide.",
+        "dosage": "2-3 grams per liter weekly.",
+        "prevention": "Avoid leaf wetness and use resistant varieties."
+    },
+    "Tomato_Early_blight": {
+        "disease_name": "Early Blight (Tomato)",
+        "treatment": "Apply fungicide containing mancozeb or chlorothalonil.",
+        "dosage": "2 grams per liter every 7-10 days.",
+        "prevention": "Crop rotation and removal of infected leaves."
+    },
+    "Tomato_Late_blight": {
+        "disease_name": "Late Blight (Tomato)",
+        "treatment": "Use metalaxyl-based fungicide.",
+        "dosage": "2 grams per liter every 7 days during infection.",
+        "prevention": "Improve air circulation and avoid overwatering."
+    },
+    "Tomato_Leaf_Mold": {
+        "disease_name": "Leaf Mold (Tomato)",
+        "treatment": "Apply chlorothalonil fungicide.",
+        "dosage": "2 grams per liter every 7 days.",
+        "prevention": "Reduce humidity and improve ventilation."
+    },
+    "Tomato_Septoria_leaf_spot": {
+        "disease_name": "Septoria Leaf Spot (Tomato)",
+        "treatment": "Spray fungicide like mancozeb.",
+        "dosage": "2 grams per liter every 7-10 days.",
+        "prevention": "Remove lower infected leaves and avoid splashing water."
+    },
+    "Tomato_Spider_mites_Two_spotted_spider_mite": {
+        "disease_name": "Two-Spotted Spider Mite (Tomato)",
+        "treatment": "Apply neem oil or miticide.",
+        "dosage": "Neem oil 5 ml per liter weekly.",
+        "prevention": "Maintain field hygiene and monitor leaf undersides."
+    },
+    "Tomato__Target_Spot": {
+        "disease_name": "Target Spot (Tomato)",
+        "treatment": "Use azoxystrobin fungicide.",
+        "dosage": "1 ml per liter every 7 days.",
+        "prevention": "Ensure good air circulation and remove infected debris."
+    },
+    "Tomato__Tomato_YellowLeaf__Curl_Virus": {
+        "disease_name": "Tomato Yellow Leaf Curl Virus",
+        "treatment": "No direct cure. Control whiteflies immediately.",
+        "dosage": "Imidacloprid 0.5 ml per liter every 10 days.",
+        "prevention": "Use resistant varieties and insect-proof nets."
+    },
+    "Tomato__Tomato_mosaic_virus": {
+        "disease_name": "Tomato Mosaic Virus",
+        "treatment": "No chemical cure available. Remove infected plants.",
+        "dosage": "Not applicable.",
+        "prevention": "Disinfect tools and avoid tobacco contamination."
+    },
+    "Tomato_healthy": {
+        "disease_name": "Healthy Tomato",
+        "treatment": "No treatment required.",
+        "dosage": "Not applicable.",
+        "prevention": "Balanced fertilization and regular monitoring."
+    }
+}

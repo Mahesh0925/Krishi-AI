@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:krishi_ai/View/bottom_nav_bar.dart';
 import 'package:krishi_ai/View/camera_screen.dart';
-import 'package:krishi_ai/View/farm_map_screen.dart';
 
 class KrishiAIDashboard extends StatefulWidget {
   const KrishiAIDashboard({super.key});
@@ -431,16 +430,16 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                             },
                           ),
                           _DashboardButton(
-                            icon: Icons.map,
-                            title: "Measure Farm",
-                            subtitle: "Calculate area",
+                            icon: Icons.history,
+                            title: "History",
+                            subtitle: "Past scans & data",
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => FarmMapScreen(),
-                                ),
-                              );
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (_) => const HistoryScreen(),
+                              //   ),
+                              // );
                             },
                           ),
                         ],
