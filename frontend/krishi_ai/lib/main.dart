@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:krishi_ai/View/spalsh_screen.dart';
 
 void main() {
@@ -10,9 +11,9 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: KrishiAISplashScreen(),
+      home: const KrishiAISplashScreen(),
     );
   }
 }

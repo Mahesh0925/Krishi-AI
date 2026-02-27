@@ -28,8 +28,8 @@ class _KrishiAISplashScreenState extends State<KrishiAISplashScreen> {
             context,
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 800),
-              pageBuilder: (_, __, ___) => const KrishiLanguageScreen(),
-              transitionsBuilder: (_, animation, __, child) =>
+              pageBuilder: (_, _, _) => const KrishiLanguageScreen(),
+              transitionsBuilder: (_, animation, _, child) =>
                   FadeTransition(opacity: animation, child: child),
             ),
           );
