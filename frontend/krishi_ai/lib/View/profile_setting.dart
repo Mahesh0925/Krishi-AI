@@ -62,7 +62,7 @@ class ProfileSettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                "Rajesh Kumar",
+                "Mauli",
                 style: GoogleFonts.inter(
                   fontSize: 20,
                   color: Colors.white,
@@ -71,7 +71,7 @@ class ProfileSettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                "rajesh.kumar@email.com",
+                "mauli@gmail.com",
                 style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
               ),
               const SizedBox(height: 25),

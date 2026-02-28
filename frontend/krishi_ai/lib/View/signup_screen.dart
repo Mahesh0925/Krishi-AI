@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // 🔥 Add this
+// import your custom snackbar file if you have one
+// import 'package:your_project/widgets/custom_snackbar.dart';
 
 class KrishiAISignUpScreen extends StatefulWidget {
   const KrishiAISignUpScreen({super.key});
@@ -9,11 +12,19 @@ class KrishiAISignUpScreen extends StatefulWidget {
 }
 
 class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  // ✏️ Controllers
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController mobileController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    // 🎨 color palette
     const Color primary = Color(0xFF93F20D);
     const Color backgroundDark = Color(0xFF0E1408);
     const Color surfaceDark = Color(0xFF1B2310);
@@ -36,7 +47,6 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 🌱 header logo
                 const SizedBox(height: 24),
                 _logo(primary, surfaceDark),
                 const SizedBox(height: 20),
@@ -58,13 +68,15 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // 🧾 Form section
                 _sectionTitle("Personal Information", primary),
                 const SizedBox(height: 12),
+
+                // 🧾 Inputs with controllers
                 _textInput(
                   "Full Name",
                   "e.g. Rahul Sharma",
                   Icons.person,
+                  nameController,
                   primary,
                   surfaceDark,
                   borderDark,
@@ -74,6 +86,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                   "Mobile Number",
                   "+91 00000 00000",
                   Icons.call,
+                  mobileController,
                   primary,
                   surfaceDark,
                   borderDark,
@@ -83,6 +96,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                   "Email Address",
                   "name@example.com",
                   Icons.mail,
+                  emailController,
                   primary,
                   surfaceDark,
                   borderDark,
@@ -90,6 +104,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 const SizedBox(height: 18),
                 _passwordField(
                   "Create Password",
+                  passwordController,
                   primary,
                   surfaceDark,
                   borderDark,
@@ -99,85 +114,14 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 Divider(color: borderDark.withOpacity(0.5), thickness: 1),
                 const SizedBox(height: 18),
                 _sectionTitle("Farm Information", primary),
-                const SizedBox(height: 12),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _dropdown(
-                        "Primary Crop",
-                        ["Rice", "Wheat", "Cotton", "Corn"],
-                        primary,
-                        surfaceDark,
-                        borderDark,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _dropdown(
-                        "State",
-                        ["Punjab", "Haryana", "Maharashtra", "Gujarat"],
-                        primary,
-                        surfaceDark,
-                        borderDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                _textInput(
-                  "Farm Size (Acres)",
-                  "Enter acreage",
-                  Icons.spa,
-                  primary,
-                  surfaceDark,
-                  borderDark,
-                ),
-
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text.rich(
-                    TextSpan(
-                      style: GoogleFonts.spaceGrotesk(
-                        color: Colors.white.withOpacity(0.4),
-                        fontSize: 12,
-                      ),
-                      children: [
-                        const TextSpan(
-                          text: "By signing up, you agree to our ",
-                        ),
-                        TextSpan(
-                          text: "Terms of Service",
-                          style: const TextStyle(
-                            color: primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        const TextSpan(text: " and "),
-                        TextSpan(
-                          text: "Privacy Policy",
-                          style: const TextStyle(
-                            color: primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        const TextSpan(text: "."),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                // 🚀 Submit Button
+                const SizedBox(height: 32),
+                // 🚀 Firebase Signup Button
                 SizedBox(
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
+                    onPressed: _isLoading ? null : _handleSignUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       foregroundColor: backgroundDark,
@@ -185,72 +129,29 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                       shadowColor: primary.withOpacity(0.3),
                       elevation: 12,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Create My Account",
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: backgroundDark,
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.black)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Create My Account",
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: backgroundDark,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.arrow_forward,
+                                color: backgroundDark,
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward, color: backgroundDark),
-                      ],
-                    ),
                   ),
                 ),
-                const SizedBox(height: 32),
 
-                // Divider
-                // Row(
-                //   children: [
-                //     Expanded(child: Container(height: 1, color: borderDark)),
-                //     Padding(
-                //       padding: const EdgeInsets.symmetric(horizontal: 10),
-                //       child: Text(
-                //         "or sign up with",
-                //         style: GoogleFonts.spaceGrotesk(
-                //           color: Colors.white.withOpacity(0.3),
-                //           fontSize: 12,
-                //           letterSpacing: 1.5,
-                //           fontWeight: FontWeight.bold,
-                //         ),
-                //       ),
-                //     ),
-                //     Expanded(child: Container(height: 1, color: borderDark)),
-                //   ],
-                // ),
-                // const SizedBox(height: 20),
-
-                // // 🌐 Google login
-                // SizedBox(
-                //   width: double.infinity,
-                //   height: 56,
-                //   child: OutlinedButton.icon(
-                //     onPressed: () {},
-                //     icon: const Icon(
-                //       Icons.g_mobiledata,
-                //       color: Colors.white,
-                //       size: 32,
-                //     ),
-                //     label: Text(
-                //       "Continue with Google",
-                //       style: GoogleFonts.spaceGrotesk(
-                //         color: Colors.white,
-                //         fontSize: 16,
-                //         fontWeight: FontWeight.w500,
-                //       ),
-                //     ),
-                //     style: OutlinedButton.styleFrom(
-                //       side: BorderSide(color: borderDark),
-                //       shape: const StadiumBorder(),
-                //       backgroundColor: Colors.transparent,
-                //     ),
-                //   ),
-                // ),
                 const SizedBox(height: 30),
                 Text(
                   "Already have an account?",
@@ -260,9 +161,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: Text(
                     "Log In",
                     style: GoogleFonts.spaceGrotesk(
@@ -272,7 +171,6 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -281,7 +179,42 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
     );
   }
 
-  // 🧩 Components
+  // 🚀 Firebase SignUp logic
+  Future<void> _handleSignUp() async {
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.trim().isEmpty) {
+      _showSnackbar("Enter valid data!", Colors.red);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _firebaseAuth.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      _showSnackbar("Sign up successful!", Colors.lightGreen);
+      Navigator.of(context).pop(); // go back after success
+    } on FirebaseAuthException catch (error) {
+      _showSnackbar(error.message ?? "Something went wrong!", Colors.red);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackbar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // 🧩 UI Helpers below
+
   Widget _logo(Color primary, Color surfaceDark) {
     return Column(
       children: [
@@ -321,25 +254,24 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
     );
   }
 
-  Widget _sectionTitle(String title, Color primary) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: primary.withOpacity(0.7),
-          letterSpacing: 2,
-        ),
+  Widget _sectionTitle(String title, Color primary) => Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+      title.toUpperCase(),
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: primary.withOpacity(0.7),
+        letterSpacing: 2,
       ),
-    );
-  }
+    ),
+  );
 
   Widget _textInput(
     String label,
     String hint,
     IconData icon,
+    TextEditingController controller,
     Color primary,
     Color fill,
     Color border,
@@ -357,6 +289,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
           style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.4)),
@@ -388,7 +321,13 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
     );
   }
 
-  Widget _passwordField(String label, Color primary, Color fill, Color border) {
+  Widget _passwordField(
+    String label,
+    TextEditingController controller,
+    Color primary,
+    Color fill,
+    Color border,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -402,6 +341,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
           obscureText: !_isPasswordVisible,
           style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
@@ -435,75 +375,6 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _dropdown(
-    String label,
-    List<String> items,
-    Color primary,
-    Color fill,
-    Color border,
-  ) {
-    String? selected;
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.spaceGrotesk(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: fill,
-                border: Border.all(color: border),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  dropdownColor: fill,
-                  value: selected,
-                  hint: Text(
-                    "Select",
-                    style: GoogleFonts.spaceGrotesk(
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                  ),
-                  icon: Icon(
-                    Icons.expand_more,
-                    color: Colors.white.withOpacity(0.4),
-                  ),
-                  isExpanded: true,
-                  items: items
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (val) {
-                    setState(() => selected = val);
-                  },
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -6,6 +6,7 @@ class ChatbotOverlay {
   static OverlayEntry? _overlayEntry;
   static bool _isVisible = false;
   static bool _isChatOpen = false;
+  static final List<String> _disabledScreens = [];
 
   static void initialize(BuildContext context) {
     if (_overlayEntry != null) return;
@@ -14,6 +15,20 @@ class ChatbotOverlay {
 
     Overlay.of(context).insert(_overlayEntry!);
     _isVisible = true;
+  }
+
+  static void disableForScreen(String screenName) {
+    if (!_disabledScreens.contains(screenName)) {
+      _disabledScreens.add(screenName);
+    }
+  }
+
+  static void enableForScreen(String screenName) {
+    _disabledScreens.remove(screenName);
+  }
+
+  static bool isDisabledForScreen(String screenName) {
+    return _disabledScreens.contains(screenName);
   }
 
   static void show() {
@@ -128,6 +143,24 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
   @override
   Widget build(BuildContext context) {
     if (!ChatbotOverlay.isVisible) return const SizedBox.shrink();
+
+    // Check if we're on language, login, or signup screen by traversing widget tree
+    bool isOnRestrictedScreen = false;
+    context.visitAncestorElements((element) {
+      final widgetType = element.widget.runtimeType.toString();
+      if (widgetType.contains('KrishiLanguageScreen') ||
+          widgetType.contains('KrishiAILoginScreen') ||
+          widgetType.contains('KrishiAISignUpScreen') ||
+          widgetType.contains('KrishiAISplashScreen')) {
+        isOnRestrictedScreen = true;
+        return false; // Stop traversing
+      }
+      return true; // Continue traversing
+    });
+
+    if (isOnRestrictedScreen) {
+      return const SizedBox.shrink();
+    }
 
     const primary = Color(0xFF59F20D);
     const backgroundDark = Color(0xFF0A0F08);

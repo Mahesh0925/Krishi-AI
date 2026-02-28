@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:krishi_ai/View/bottom_nav_bar.dart';
 import 'package:krishi_ai/View/camera_screen.dart';
+import 'package:krishi_ai/View/gov_schemes_screen.dart';
+import 'package:krishi_ai/View/market_screen.dart';
+import 'package:krishi_ai/View/weather_advisory_screen.dart';
 import 'package:krishi_ai/widgets/chatbot_wrapper.dart';
+import '../services/weather_advisory_service.dart';
 
 class KrishiAIDashboard extends StatefulWidget {
   const KrishiAIDashboard({super.key});
@@ -14,7 +20,114 @@ class KrishiAIDashboard extends StatefulWidget {
 
 class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
   int selectedIndex = 0;
-  DateTime? lastPressedTime; // ✅ Track last back press
+  DateTime? lastPressedTime;
+
+  // Weather data
+  bool _isLoadingWeather = true;
+  Map<String, dynamic>? _weatherData;
+  String _locationName = "Loading...";
+  String _temperature = "--";
+  String _condition = "Loading weather...";
+  String _humidity = "--";
+  String _windSpeed = "--";
+  String _rainChance = "--";
+  IconData _weatherIcon = Icons.wb_cloudy;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWeatherData();
+  }
+
+  Future<void> _fetchWeatherData() async {
+    try {
+      // Get location permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoadingWeather = false;
+          _locationName = "Location Unavailable";
+          _condition = "Enable location to see weather";
+        });
+        return;
+      }
+
+      // Get current position
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Get address
+      final List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks[0];
+        final city = place.locality ?? place.subAdministrativeArea ?? 'Unknown';
+        final state = place.administrativeArea ?? '';
+
+        // Fetch weather data
+        final weatherData = await WeatherAdvisoryService.fetchWeatherAdvisory(
+          city: city,
+          state: state,
+        );
+
+        if (mounted) {
+          setState(() {
+            _weatherData = weatherData;
+            _isLoadingWeather = false;
+
+            // Extract location
+            final location = weatherData['location'] as Map<String, dynamic>?;
+            _locationName =
+                '${location?['city'] ?? city}, ${location?['country'] ?? 'India'}';
+
+            // Extract current weather from first forecast day
+            final forecast = weatherData['forecast'] as List<dynamic>?;
+            if (forecast != null && forecast.isNotEmpty) {
+              final today = forecast[0] as Map<String, dynamic>;
+              _temperature = '${today['temp_max_c'] ?? '--'}';
+              _condition = today['condition'] ?? 'Unknown';
+              _humidity = '${today['humidity_avg'] ?? '--'}%';
+              _windSpeed = '12 km/h'; // Not in current API response
+              _rainChance = '${today['rain_mm_total'] ?? 0}mm';
+              _weatherIcon = _getWeatherIcon(_condition);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching weather: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingWeather = false;
+          _locationName = "Weather Unavailable";
+          _condition = "Tap to retry";
+        });
+      }
+    }
+  }
+
+  IconData _getWeatherIcon(String condition) {
+    final cond = condition.toLowerCase();
+    if (cond.contains('rain') || cond.contains('drizzle')) {
+      return Icons.water_drop;
+    } else if (cond.contains('cloud')) {
+      return Icons.cloud;
+    } else if (cond.contains('sun') || cond.contains('clear')) {
+      return Icons.wb_sunny;
+    } else if (cond.contains('storm') || cond.contains('thunder')) {
+      return Icons.thunderstorm;
+    }
+    return Icons.wb_cloudy;
+  }
 
   String getGreeting() {
     final hour = DateTime.now().hour;
@@ -131,7 +244,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                 ),
                               ),
                               Text(
-                                "Rajesh Kumar",
+                                "Mauli",
                                 style: GoogleFonts.inter(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -227,7 +340,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            "Mumbai, India",
+                                            _locationName,
                                             style: GoogleFonts.inter(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
@@ -242,7 +355,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                             CrossAxisAlignment.end,
                                         children: [
                                           Text(
-                                            "28°",
+                                            _temperature,
                                             style: GoogleFonts.inter(
                                               fontSize: 48,
                                               fontWeight: FontWeight.bold,
@@ -251,7 +364,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
-                                            "C",
+                                            "°C",
                                             style: GoogleFonts.inter(
                                               fontSize: 20,
                                               color: Colors.grey[400],
@@ -260,7 +373,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                         ],
                                       ),
                                       Text(
-                                        "Sunny • Good for irrigation",
+                                        _condition,
                                         style: GoogleFonts.inter(
                                           fontSize: 13,
                                           color: Colors.grey[400],
@@ -271,8 +384,8 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      const Icon(
-                                        Icons.wb_sunny,
+                                      Icon(
+                                        _weatherIcon,
                                         color: Colors.yellow,
                                         size: 44,
                                       ),
@@ -315,9 +428,9 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceAround,
                                 children: [
-                                  _weatherDetail("Humidity", "62%"),
-                                  _weatherDetail("Wind", "12 km/h"),
-                                  _weatherDetail("Rain", "0%"),
+                                  _weatherDetail("Humidity", _humidity),
+                                  _weatherDetail("Wind", _windSpeed),
+                                  _weatherDetail("Rain", _rainChance),
                                 ],
                               ),
                             ],
@@ -387,9 +500,15 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                             _DashboardButton(
                               icon: Icons.calendar_month,
                               title: "Weather",
-                              subtitle: "7-day forecast",
+                              subtitle: "5-day forecast",
                               onTap: () {
-                                debugPrint("Weather clicked");
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const WeatherAdvisoryScreen(),
+                                  ),
+                                );
                               },
                             ),
                             _DashboardButton(
@@ -397,12 +516,12 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                               title: "Mandi Prices",
                               subtitle: "Live market rates",
                               onTap: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (_) => const MarketScreen(),
-                                //   ),
-                                // );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const MarketScreen(),
+                                  ),
+                                );
                               },
                             ),
                             _DashboardButton(
@@ -410,36 +529,15 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                               title: "Schemes",
                               subtitle: "Govt. benefits",
                               onTap: () {
-                                debugPrint("Schemes clicked");
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const GovSchemesScreen(),
+                                  ),
+                                );
                               },
                             ),
-                            _DashboardButton(
-                              icon: Icons.spa,
-                              title: "Fertilizer",
-                              subtitle: "Dosage calculator",
-                              onTap: () {
-                                //   Navigator.push(
-                                //     context,
-                                //     MaterialPageRoute(
-                                //       builder: (_) =>
-                                //           const FertilizerCalculatorScreen(),
-                                //     ),
-                                //   );
-                              },
-                            ),
-                            _DashboardButton(
-                              icon: Icons.agriculture,
-                              title: "Rentals",
-                              subtitle: "Equipment hire",
-                              onTap: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (_) => const RentalsScreen(),
-                                //   ),
-                                // );
-                              },
-                            ),
+
                             _DashboardButton(
                               icon: Icons.history,
                               title: "History",

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1009501531964",
+    "project_id": "krishi-ai-bd03a",
+    "storage_bucket": "krishi-ai-bd03a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1009501531964:android:b25ba169bbd6560e3ab839",
+        "android_client_info": {
+          "package_name": "com.example.krishi_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwwyAWtZhyXbzomqhpT9Reqbg-R4DMJ8s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -74,7 +74,16 @@ class _LandMeasureScreenState extends State<LandMeasureScreen> {
           _isLoading = false;
         });
 
-        _mapController.move(_currentPosition!, 16.0);
+        // Move map after a short delay to ensure widget is rendered
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            try {
+              _mapController.move(_currentPosition!, 16.0);
+            } catch (e) {
+              print('Error moving map: $e');
+            }
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -241,6 +250,21 @@ class _LandMeasureScreenState extends State<LandMeasureScreen> {
     });
   }
 
+  void _undoLastPoint() {
+    if (_points.isEmpty) return;
+
+    setState(() {
+      _points.removeLast();
+      _markers.removeLast();
+
+      if (_points.length >= 3) {
+        _calculateArea();
+      } else {
+        _areaInSquareMeters = 0.0;
+      }
+    });
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -324,6 +348,16 @@ class _LandMeasureScreenState extends State<LandMeasureScreen> {
                         _currentPosition ?? const LatLng(20.5937, 78.9629),
                     initialZoom: _currentPosition != null ? 16.0 : 5.0,
                     onTap: _onMapTapped,
+                    onMapReady: () {
+                      // Map is ready, safe to use controller now
+                      if (_currentPosition != null) {
+                        try {
+                          _mapController.move(_currentPosition!, 16.0);
+                        } catch (e) {
+                          print('Error moving map on ready: $e');
+                        }
+                      }
+                    },
                     interactionOptions: const InteractionOptions(
                       flags: InteractiveFlag.all,
                     ),
@@ -620,25 +654,40 @@ class _LandMeasureScreenState extends State<LandMeasureScreen> {
             ),
           ),
 
-          // Reset Button
+          // Bottom Buttons Row
           Positioned(
             bottom: 20,
             left: 16,
             right: 16,
-            child: ElevatedButton.icon(
-              onPressed: _points.isEmpty ? null : _resetPoints,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reset Points'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: backgroundDark,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: Row(
+              children: [
+                // Undo Button
+                FloatingActionButton(
+                  onPressed: _points.isEmpty ? null : _undoLastPoint,
+                  backgroundColor: _points.isEmpty ? Colors.grey[800] : primary,
+                  foregroundColor: backgroundDark,
+                  child: const Icon(Icons.undo),
                 ),
-                disabledBackgroundColor: Colors.grey[800],
-                disabledForegroundColor: Colors.grey[600],
-              ),
+                const SizedBox(width: 12),
+                // Reset Button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _points.isEmpty ? null : _resetPoints,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reset Points'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: backgroundDark,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      disabledBackgroundColor: Colors.grey[800],
+                      disabledForegroundColor: Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

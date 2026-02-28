@@ -68,7 +68,7 @@ class KrishiAIFarmerProfile extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Rajesh Kumar',
+                  'Mauli',
                   style: GoogleFonts.inter(
                     fontSize: 22,
                     color: Colors.white,
@@ -77,7 +77,7 @@ class KrishiAIFarmerProfile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'premium_member'.tr,
+                  '1234567890'.tr,
                   style: GoogleFonts.inter(
                     color: primary,
                     fontWeight: FontWeight.w600,
@@ -94,19 +94,19 @@ class KrishiAIFarmerProfile extends StatelessWidget {
               children: [
                 _buildInputField(
                   "full_name".tr,
-                  "Rajesh Kumar",
+                  "Mauli",
                   backgroundDark,
                   primary,
                 ),
                 _buildInputField(
                   "phone_number".tr,
-                  "+91 98765 43210",
+                  "+91 1234567890",
                   backgroundDark,
                   primary,
                 ),
                 _buildInputField(
                   "email_address".tr,
-                  "rajesh.kumar@example.com",
+                  "mauli@gmail.com",
                   backgroundDark,
                   primary,
                 ),
@@ -314,7 +314,7 @@ class KrishiAIFarmerProfile extends StatelessWidget {
             children: [
               Expanded(
                 child: TextFormField(
-                  initialValue: 'Mumbai, India',
+                  initialValue: 'Lonavala, India',
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     filled: true,
