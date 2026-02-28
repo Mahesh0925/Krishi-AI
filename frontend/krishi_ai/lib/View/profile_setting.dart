@@ -6,6 +6,8 @@ import 'package:krishi_ai/View/change_language.dart';
 import 'package:krishi_ai/View/edit_profile.dart';
 import 'package:krishi_ai/View/home_screen.dart';
 import 'package:krishi_ai/View/login_screen.dart';
+import 'package:krishi_ai/View/privacy_security_screen.dart';
+import 'package:krishi_ai/View/help_support_screen.dart';
 import 'package:krishi_ai/utils/tutorial_helper.dart';
 
 class ProfileSettingsScreen extends StatelessWidget {
@@ -118,7 +120,12 @@ class ProfileSettingsScreen extends StatelessWidget {
                 title: "privacy_security".tr,
                 subtitle: "manage_permissions".tr,
                 onTap: () {
-                  debugPrint("Privacy tapped");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PrivacySecurityScreen(),
+                    ),
+                  );
                 },
               ),
               _settingsTile(
@@ -126,7 +133,12 @@ class ProfileSettingsScreen extends StatelessWidget {
                 title: "help_support".tr,
                 subtitle: "faqs_contact".tr,
                 onTap: () {
-                  debugPrint("Help tapped");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HelpSupportScreen(),
+                    ),
+                  );
                 },
               ),
 
