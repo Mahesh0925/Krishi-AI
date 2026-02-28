@@ -170,6 +170,8 @@ class AppTranslations extends Translations {
       'tutorial_skip': 'Skip',
       'tutorial_next': 'Next',
       'tutorial_got_it': 'Got it!',
+      'tutorial_scroll_hint':
+          'Scroll down to explore more features like Mandi Prices & Government Schemes!',
     },
     'hi_IN': {
       // Common
@@ -338,6 +340,8 @@ class AppTranslations extends Translations {
       'tutorial_skip': 'छोड़ें',
       'tutorial_next': 'अगला',
       'tutorial_got_it': 'समझ गया!',
+      'tutorial_scroll_hint':
+          'मंडी भाव और सरकारी योजनाओं जैसी अधिक सुविधाओं का पता लगाने के लिए नीचे स्क्रॉल करें!',
     },
     'mr_IN': {
       // Common
@@ -506,6 +510,8 @@ class AppTranslations extends Translations {
       'tutorial_skip': 'वगळा',
       'tutorial_next': 'पुढे',
       'tutorial_got_it': 'समजले!',
+      'tutorial_scroll_hint':
+          'मंडी भाव आणि सरकारी योजना यासारख्या अधिक वैशिष्ट्यांचा शोध घेण्यासाठी खाली स्क्रोल करा!',
     },
   };
 }

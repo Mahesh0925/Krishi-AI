@@ -34,6 +34,10 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
   // Tutorial coach mark
   TutorialCoachMark? tutorialCoachMark;
 
+  // Scroll controller for tutorial
+  final ScrollController _scrollController = ScrollController();
+  bool _waitingForScroll = false;
+
   // Weather data
   bool _isLoadingWeather = true;
   Map<String, dynamic>? _weatherData;
@@ -50,6 +54,42 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
     super.initState();
     _fetchWeatherData();
     _checkAndShowTutorial();
+
+    // Listen to scroll events for tutorial
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Handle scroll events for tutorial
+  void _onScroll() {
+    if (_waitingForScroll && _isSchemeButtonVisible()) {
+      _waitingForScroll = false;
+      // Show schemes tutorial after a short delay
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _showSchemesTutorial();
+        }
+      });
+    }
+  }
+
+  // Check if schemes button is visible on screen
+  bool _isSchemeButtonVisible() {
+    final RenderBox? renderBox =
+        schemesKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return false;
+
+    final position = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Check if at least 50% of the button is visible
+    return position.dy + size.height / 2 < screenHeight && position.dy > 0;
   }
 
   // Check if tutorial should be shown
@@ -114,18 +154,26 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
         keyTarget: scanDiseaseKey,
         alignSkip: Alignment.topRight,
         shape: ShapeLightFocus.RRect,
-        radius: 16,
+        radius: 12,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                constraints: const BoxConstraints(maxWidth: 280),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E2923),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -134,20 +182,25 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                     Text(
                       "tutorial_scan_title".tr,
                       style: GoogleFonts.inter(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF59F20D),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       "tutorial_scan_desc".tr,
                       style: GoogleFonts.inter(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.white,
+                        height: 1.3,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -155,11 +208,19 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                           onPressed: () {
                             controller.skip();
                           },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             "tutorial_skip".tr,
                             style: GoogleFonts.inter(
                               color: Colors.grey,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -171,18 +232,20 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                             backgroundColor: const Color(0xFF59F20D),
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
+                              horizontal: 16,
+                              vertical: 8,
                             ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                           ),
                           child: Text(
                             "tutorial_next".tr,
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -197,25 +260,33 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
       ),
     );
 
-    // Target 2: Weather Button (Middle-Left)
+    // Target 2: Weather Button
     targets.add(
       TargetFocus(
         identify: "weatherKey",
         keyTarget: weatherKey,
         alignSkip: Alignment.topRight,
         shape: ShapeLightFocus.RRect,
-        radius: 16,
+        radius: 12,
         contents: [
           TargetContent(
-            align: ContentAlign.bottom,
-            padding: const EdgeInsets.all(16),
+            align: ContentAlign.top,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                constraints: const BoxConstraints(maxWidth: 280),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E2923),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -224,20 +295,25 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                     Text(
                       "tutorial_weather_title".tr,
                       style: GoogleFonts.inter(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF59F20D),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       "tutorial_weather_desc".tr,
                       style: GoogleFonts.inter(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.white,
+                        height: 1.3,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -245,11 +321,19 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                           onPressed: () {
                             controller.skip();
                           },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             "tutorial_skip".tr,
                             style: GoogleFonts.inter(
                               color: Colors.grey,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -261,18 +345,20 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                             backgroundColor: const Color(0xFF59F20D),
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
+                              horizontal: 16,
+                              vertical: 8,
                             ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                           ),
                           child: Text(
                             "tutorial_next".tr,
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -287,25 +373,33 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
       ),
     );
 
-    // Target 3: Mandi Prices Button (Top-Right)
+    // Target 3: Mandi Prices Button with scroll hint
     targets.add(
       TargetFocus(
         identify: "mandiPricesKey",
         keyTarget: mandiPricesKey,
         alignSkip: Alignment.topRight,
         shape: ShapeLightFocus.RRect,
-        radius: 16,
+        radius: 12,
         contents: [
           TargetContent(
-            align: ContentAlign.bottom,
-            padding: const EdgeInsets.all(16),
+            align: ContentAlign.top,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             builder: (context, controller) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                constraints: const BoxConstraints(maxWidth: 300),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E2923),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -314,20 +408,59 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                     Text(
                       "tutorial_mandi_title".tr,
                       style: GoogleFonts.inter(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF59F20D),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       "tutorial_mandi_desc".tr,
                       style: GoogleFonts.inter(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.white,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    // Scroll hint section
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF59F20D).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF59F20D).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.arrow_downward,
+                            color: Color(0xFF59F20D),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "tutorial_scroll_hint".tr,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: const Color(0xFF59F20D),
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -335,112 +468,45 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                           onPressed: () {
                             controller.skip();
                           },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             "tutorial_skip".tr,
                             style: GoogleFonts.inter(
                               color: Colors.grey,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
                         ElevatedButton(
                           onPressed: () {
+                            _waitingForScroll = true;
                             controller.next();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF59F20D),
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
+                              horizontal: 16,
+                              vertical: 8,
                             ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                           ),
                           child: Text(
                             "tutorial_next".tr,
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-
-    // Target 4: Government Schemes Button (Middle-Right)
-    targets.add(
-      TargetFocus(
-        identify: "schemesKey",
-        keyTarget: schemesKey,
-        alignSkip: Alignment.topRight,
-        shape: ShapeLightFocus.RRect,
-        radius: 16,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            padding: const EdgeInsets.all(16),
-            builder: (context, controller) {
-              return Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E2923),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF59F20D), width: 2),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "tutorial_schemes_title".tr,
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF59F20D),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "tutorial_schemes_desc".tr,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            controller.next();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF59F20D),
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            "tutorial_got_it".tr,
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -456,6 +522,122 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
     );
 
     return targets;
+  }
+
+  // Show schemes tutorial separately
+  void _showSchemesTutorial() {
+    final schemesTutorial = TutorialCoachMark(
+      targets: [
+        TargetFocus(
+          identify: "schemesKey",
+          keyTarget: schemesKey,
+          alignSkip: Alignment.topRight,
+          shape: ShapeLightFocus.RRect,
+          radius: 12,
+          contents: [
+            TargetContent(
+              align: ContentAlign.top,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              builder: (context, controller) {
+                return Container(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E2923),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF59F20D),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "tutorial_schemes_title".tr,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF59F20D),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "tutorial_schemes_desc".tr,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.white,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () async {
+                              controller.next();
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setBool('tutorialSeen', true);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF59F20D),
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            child: Text(
+                              "tutorial_got_it".tr,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+      colorShadow: Colors.black,
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('tutorialSeen', true);
+      },
+      onSkip: () {
+        _saveTutorialSeen();
+        return true;
+      },
+    );
+
+    schemesTutorial.show(context: context);
   }
 
   // Show tutorial
@@ -725,6 +907,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                 // 🌤 Scrollable Body
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 10,
