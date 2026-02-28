@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:krishi_ai/controllers/language_controller.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {
   const LanguageSelectionScreen({super.key});
@@ -9,17 +11,25 @@ class LanguageSelectionScreen extends StatefulWidget {
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
-  int selectedIndex = -1; // none selected initially
+  int selectedIndex = -1;
 
   static const Color primary = Color(0xFF59F20D);
   static const Color surfaceDark = Color(0xFF1E2923);
   static const Color backgroundDark = Color(0xFF162210);
 
   final languages = <Map<String, String>>[
-    {'icon': 'A', 'title': 'English', 'subtitle': 'Active'},
-    {'icon': 'हि', 'title': 'हिन्दी', 'subtitle': 'Hindi'},
-    {'icon': 'म', 'title': 'मराठी', 'subtitle': 'Marathi'},
+    {'icon': 'A', 'title': 'English', 'subtitle': 'english', 'code': 'en'},
+    {'icon': 'हि', 'title': 'हिन्दी', 'subtitle': 'hindi', 'code': 'hi'},
+    {'icon': 'म', 'title': 'मराठी', 'subtitle': 'marathi', 'code': 'mr'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final languageController = Get.find<LanguageController>();
+    final currentCode = languageController.getCurrentLanguageCode();
+    selectedIndex = languages.indexWhere((lang) => lang['code'] == currentCode);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +71,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
 
               SizedBox(height: screenH * 0.03),
 
-              const Text(
-                'Select Language',
-                style: TextStyle(
+              Text(
+                'select_language'.tr,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -72,8 +82,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Choose your preferred language to continue using Krishi AI',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                'choose_language_message'.tr,
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
 
@@ -144,7 +154,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                                       ),
                                       const SizedBox(height: 3),
                                       Text(
-                                        lang['subtitle'] ?? '',
+                                        (lang['subtitle'] ?? '').tr,
                                         style: TextStyle(
                                           color: isActive
                                               ? primary.withValues(alpha: 0.8)
@@ -188,8 +198,15 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // ✅ Pop this page
+                    onPressed: () async {
+                      final languageController = Get.find<LanguageController>();
+                      final selectedLang = languages[selectedIndex];
+                      await languageController.changeLanguage(
+                        selectedLang['code']!,
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
@@ -198,11 +215,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 8,
-                      shadowColor: primary.withOpacity(0.4),
+                      shadowColor: primary.withValues(alpha: 0.4),
                     ),
-                    child: const Text(
-                      "CHANGE LANGUAGE",
-                      style: TextStyle(
+                    child: Text(
+                      'change_language'.tr,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -213,7 +230,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               const SizedBox(height: 40),
 
               Text(
-                'You can change this anytime in Profile settings',
+                'change_anytime'.tr,
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                 textAlign: TextAlign.center,
               ),

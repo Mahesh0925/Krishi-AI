@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:krishi_ai/View/bottom_nav_bar.dart';
 import 'package:krishi_ai/View/change_language.dart';
 import 'package:krishi_ai/View/edit_profile.dart';
 import 'package:krishi_ai/View/home_screen.dart';
 import 'package:krishi_ai/View/login_screen.dart';
+import 'package:krishi_ai/utils/tutorial_helper.dart';
 
 class ProfileSettingsScreen extends StatelessWidget {
   const ProfileSettingsScreen({super.key});
@@ -30,7 +32,7 @@ class ProfileSettingsScreen extends StatelessWidget {
           backgroundColor: surfaceDark,
           elevation: 0,
           title: Text(
-            "Profile Settings",
+            "profile_settings".tr,
             style: GoogleFonts.inter(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -79,8 +81,8 @@ class ProfileSettingsScreen extends StatelessWidget {
               // ⚙️ Settings Options
               _settingsTile(
                 icon: Icons.edit_outlined,
-                title: "Edit Profile",
-                subtitle: "Change your name, photo, or phone number",
+                title: "edit_profile".tr,
+                subtitle: "change_name_photo".tr,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -92,45 +94,67 @@ class ProfileSettingsScreen extends StatelessWidget {
               ),
               _settingsTile(
                 icon: Icons.notifications_active_outlined,
-                title: "Notifications",
-                subtitle: "Manage your alert preferences",
+                title: "notifications".tr,
+                subtitle: "manage_alert_preferences".tr,
                 onTap: () {
                   debugPrint("Notifications tapped");
                 },
               ),
               _settingsTile(
                 icon: Icons.language_outlined,
-                title: "Language",
-                subtitle: "Select preferred app language",
+                title: "language".tr,
+                subtitle: "select_preferred_language".tr,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => LanguageSelectionScreen(),
+                      builder: (_) => const LanguageSelectionScreen(),
                     ),
                   );
                 },
               ),
               _settingsTile(
                 icon: Icons.privacy_tip_outlined,
-                title: "Privacy & Security",
-                subtitle: "Manage permissions and access",
+                title: "privacy_security".tr,
+                subtitle: "manage_permissions".tr,
                 onTap: () {
                   debugPrint("Privacy tapped");
                 },
               ),
               _settingsTile(
                 icon: Icons.help_outline,
-                title: "Help & Support",
-                subtitle: "FAQs or contact customer care",
+                title: "help_support".tr,
+                subtitle: "faqs_contact".tr,
                 onTap: () {
                   debugPrint("Help tapped");
                 },
               ),
+
+              // 🧪 TEMPORARY: Reset Tutorial Button (Remove before production)
+              _settingsTile(
+                icon: Icons.refresh,
+                title: "Reset Tutorial (Testing)",
+                subtitle: "Show tutorial again on next app start",
+                onTap: () async {
+                  await TutorialHelper.resetTutorial();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Tutorial reset! Please restart the app to see it again.",
+                        style: GoogleFonts.inter(),
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                },
+                color: Colors.orange,
+              ),
+
               _settingsTile(
                 icon: Icons.logout,
-                title: "Logout",
-                subtitle: "Sign out from your account",
+                title: "logout".tr,
+                subtitle: "sign_out".tr,
                 onTap: () {
                   _showLogoutDialog(context);
                 },
@@ -139,7 +163,7 @@ class ProfileSettingsScreen extends StatelessWidget {
 
               const SizedBox(height: 35),
               Text(
-                "Version 1.0.0 (Dark Edition)",
+                "version".tr,
                 style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 11),
               ),
               const SizedBox(height: 10),
@@ -222,18 +246,24 @@ class ProfileSettingsScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2923),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text(
-          "Logout",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          "logout".tr,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        content: const Text(
-          "Are you sure you want to logout?",
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          "logout_confirm".tr,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+            child: Text(
+              "cancel".tr,
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -242,7 +272,7 @@ class ProfileSettingsScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const KrishiAILoginScreen()),
               );
             },
-            child: const Text("Logout", style: TextStyle(color: primary)),
+            child: Text("logout".tr, style: const TextStyle(color: primary)),
           ),
         ],
       ),

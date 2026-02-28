@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -54,9 +55,9 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Camera permission is required")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("camera_permission_needed".tr)));
         Navigator.pop(context);
       }
     }
@@ -68,24 +69,24 @@ class _CameraScreenState extends State<CameraScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E2923),
         title: Text(
-          "Camera Permission Required",
+          "camera_permission_required".tr,
           style: GoogleFonts.spaceGrotesk(color: Colors.white),
         ),
         content: Text(
-          "Please enable camera permission in settings to scan crop diseases.",
+          "enable_camera_permission".tr,
           style: GoogleFonts.spaceGrotesk(color: Colors.grey[400]),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: TextStyle(color: Colors.grey[400])),
+            child: Text("cancel".tr, style: TextStyle(color: Colors.grey[400])),
           ),
           TextButton(
             onPressed: () {
               openAppSettings();
               Navigator.pop(context);
             },
-            child: Text("Open Settings", style: TextStyle(color: primary)),
+            child: Text("open_settings".tr, style: TextStyle(color: primary)),
           ),
         ],
       ),
@@ -277,7 +278,7 @@ class _CameraScreenState extends State<CameraScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            "Scan Crop Disease",
+            "scan_crop_disease".tr,
             style: GoogleFonts.spaceGrotesk(
               color: primary,
               fontWeight: FontWeight.bold,
@@ -294,7 +295,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     Icon(Icons.camera_alt_rounded, color: primary, size: 80),
                     const SizedBox(height: 30),
                     Text(
-                      "Choose an option",
+                      "choose_option".tr,
                       style: GoogleFonts.spaceGrotesk(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -304,13 +305,13 @@ class _CameraScreenState extends State<CameraScreen> {
                     const SizedBox(height: 40),
                     _buildOptionButton(
                       icon: Icons.camera_alt,
-                      label: "Take Photo",
+                      label: "take_photo".tr,
                       onTap: _requestCameraPermission,
                     ),
                     const SizedBox(height: 16),
                     _buildOptionButton(
                       icon: Icons.photo_library,
-                      label: "Choose from Gallery",
+                      label: "choose_from_gallery".tr,
                       onTap: _openGallery,
                     ),
                   ],
@@ -326,7 +327,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       CircularProgressIndicator(color: primary, strokeWidth: 4),
                       const SizedBox(height: 20),
                       Text(
-                        "Analyzing Crop Disease...",
+                        "analyzing_crop".tr,
                         style: GoogleFonts.spaceGrotesk(
                           color: primary,
                           fontWeight: FontWeight.bold,

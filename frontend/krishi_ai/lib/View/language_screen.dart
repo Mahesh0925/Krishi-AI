@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:krishi_ai/View/login_screen.dart';
+import 'package:krishi_ai/controllers/language_controller.dart';
 
 class KrishiLanguageScreen extends StatefulWidget {
   const KrishiLanguageScreen({super.key});
@@ -11,14 +13,20 @@ class KrishiLanguageScreen extends StatefulWidget {
 }
 
 class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
-  String selectedLang = "Hindi";
+  String selectedLang = "en"; // Default to English code
+  final languageController = Get.find<LanguageController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Get current language if already set
+    selectedLang = languageController.getCurrentLanguageCode();
+  }
 
   @override
   Widget build(BuildContext context) {
     const emeraldDeep = Color(0xFF062C1E);
-    const charcoalDark = Color(0xFF1A1C1A);
     const limeGlow = Color(0xFFBCFF00);
-    const primaryGreen = Color(0xFF13EC13);
 
     return WillPopScope(
       onWillPop: () async {
@@ -46,16 +54,16 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                         padding: const EdgeInsets.all(16),
                         margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                           ),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Icon(Icons.eco, color: limeGlow, size: 40),
                       ),
                       Text(
-                        "Krishi AI",
+                        "app_name".tr,
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -64,10 +72,10 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Choose your preferred language to start farming smarter.",
+                        "choose_language_message".tr,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.spaceGrotesk(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                           fontSize: 18,
                         ),
                       ),
@@ -75,27 +83,36 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
 
                       // 🌍 Language Buttons
                       _languageButton(
-                        title: "Hindi",
+                        title: "hindi".tr,
                         subtitle: "हिन्दी",
                         icon: Icons.translate,
-                        isSelected: selectedLang == "Hindi",
-                        onTap: () => setState(() => selectedLang = "Hindi"),
+                        isSelected: selectedLang == "hi",
+                        onTap: () async {
+                          setState(() => selectedLang = "hi");
+                          await languageController.changeLanguage("hi");
+                        },
                       ),
                       const SizedBox(height: 16),
                       _languageButton(
-                        title: "Marathi",
+                        title: "marathi".tr,
                         subtitle: "मराठी",
                         icon: Icons.language,
-                        isSelected: selectedLang == "Marathi",
-                        onTap: () => setState(() => selectedLang = "Marathi"),
+                        isSelected: selectedLang == "mr",
+                        onTap: () async {
+                          setState(() => selectedLang = "mr");
+                          await languageController.changeLanguage("mr");
+                        },
                       ),
                       const SizedBox(height: 16),
                       _languageButton(
-                        title: "English",
+                        title: "english".tr,
                         subtitle: "English",
                         icon: Icons.abc,
-                        isSelected: selectedLang == "English",
-                        onTap: () => setState(() => selectedLang = "English"),
+                        isSelected: selectedLang == "en",
+                        onTap: () async {
+                          setState(() => selectedLang = "en");
+                          await languageController.changeLanguage("en");
+                        },
                       ),
 
                       const SizedBox(height: 36),
@@ -144,10 +161,11 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            shadowColor: limeGlow.withOpacity(0.35),
+                            shadowColor: limeGlow.withValues(alpha: 0.35),
                             elevation: 15,
                           ),
                           onPressed: () {
+                            // Language is already saved when user taps on it
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -160,7 +178,7 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "CONTINUE",
+                                "continue".tr.toUpperCase(),
                                 style: GoogleFonts.spaceGrotesk(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 18,
@@ -174,10 +192,10 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        "Optimized for night-time use",
+                        "change_anytime_profile".tr,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.spaceGrotesk(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                           fontSize: 14,
                         ),
                       ),
@@ -193,7 +211,7 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                   width: 128,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -227,12 +245,17 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
-                ? limeGlow.withOpacity(0.8)
-                : const Color(0xFF064E3B).withOpacity(0.5),
+                ? limeGlow.withValues(alpha: 0.8)
+                : const Color(0xFF064E3B).withValues(alpha: 0.5),
             width: 2,
           ),
           boxShadow: isSelected
-              ? [BoxShadow(color: limeGlow.withOpacity(0.35), blurRadius: 20)]
+              ? [
+                  BoxShadow(
+                    color: limeGlow.withValues(alpha: 0.35),
+                    blurRadius: 20,
+                  ),
+                ]
               : [],
         ),
         child: Row(
@@ -246,14 +269,14 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? limeGlow
-                        : Colors.white.withOpacity(0.05),
+                        : Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
                     color: isSelected
                         ? emeraldDeep
-                        : Colors.white.withOpacity(0.4),
+                        : Colors.white.withValues(alpha: 0.4),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -265,7 +288,7 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                       style: GoogleFonts.spaceGrotesk(
                         color: isSelected
                             ? limeGlow
-                            : Colors.white.withOpacity(0.3),
+                            : Colors.white.withValues(alpha: 0.3),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2,
@@ -276,7 +299,7 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                       style: GoogleFonts.spaceGrotesk(
                         color: isSelected
                             ? Colors.white
-                            : Colors.white.withOpacity(0.8),
+                            : Colors.white.withValues(alpha: 0.8),
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -295,7 +318,7 @@ class _KrishiLanguageScreenState extends State<KrishiLanguageScreen> {
                 border: isSelected
                     ? null
                     : Border.all(
-                        color: const Color(0xFF064E3B).withOpacity(0.5),
+                        color: const Color(0xFF064E3B).withValues(alpha: 0.5),
                         width: 2,
                       ),
               ),

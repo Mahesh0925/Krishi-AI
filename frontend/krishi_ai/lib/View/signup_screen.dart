@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // 🔥 Add this
-// import your custom snackbar file if you have one
-// import 'package:your_project/widgets/custom_snackbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class KrishiAISignUpScreen extends StatefulWidget {
   const KrishiAISignUpScreen({super.key});
@@ -51,7 +50,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 _logo(primary, surfaceDark),
                 const SizedBox(height: 20),
                 Text(
-                  "Create Account",
+                  "create_account".tr,
                   style: GoogleFonts.spaceGrotesk(
                     color: Colors.white,
                     fontSize: 28,
@@ -60,21 +59,21 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Join the future of smart farming.",
+                  "join_smart_farming".tr,
                   style: GoogleFonts.spaceGrotesk(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 32),
 
-                _sectionTitle("Personal Information", primary),
+                _sectionTitle("personal_information".tr, primary),
                 const SizedBox(height: 12),
 
                 // 🧾 Inputs with controllers
                 _textInput(
-                  "Full Name",
-                  "e.g. Rahul Sharma",
+                  "full_name".tr,
+                  "eg_name".tr,
                   Icons.person,
                   nameController,
                   primary,
@@ -83,8 +82,8 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 ),
                 const SizedBox(height: 18),
                 _textInput(
-                  "Mobile Number",
-                  "+91 00000 00000",
+                  "mobile_number".tr,
+                  "phone_placeholder".tr,
                   Icons.call,
                   mobileController,
                   primary,
@@ -93,8 +92,8 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 ),
                 const SizedBox(height: 18),
                 _textInput(
-                  "Email Address",
-                  "name@example.com",
+                  "email_address".tr,
+                  "email_placeholder".tr,
                   Icons.mail,
                   emailController,
                   primary,
@@ -103,7 +102,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 ),
                 const SizedBox(height: 18),
                 _passwordField(
-                  "Create Password",
+                  "create_password".tr,
                   passwordController,
                   primary,
                   surfaceDark,
@@ -111,9 +110,9 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                 ),
 
                 const SizedBox(height: 30),
-                Divider(color: borderDark.withOpacity(0.5), thickness: 1),
+                Divider(color: borderDark.withValues(alpha: 0.5), thickness: 1),
                 const SizedBox(height: 18),
-                _sectionTitle("Farm Information", primary),
+                _sectionTitle("farm_information".tr, primary),
 
                 const SizedBox(height: 32),
                 // 🚀 Firebase Signup Button
@@ -126,7 +125,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                       backgroundColor: primary,
                       foregroundColor: backgroundDark,
                       shape: const StadiumBorder(),
-                      shadowColor: primary.withOpacity(0.3),
+                      shadowColor: primary.withValues(alpha: 0.3),
                       elevation: 12,
                     ),
                     child: _isLoading
@@ -135,7 +134,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Create My Account",
+                                "create_my_account".tr,
                                 style: GoogleFonts.spaceGrotesk(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -154,16 +153,16 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
 
                 const SizedBox(height: 30),
                 Text(
-                  "Already have an account?",
+                  "already_have_account".tr,
                   style: GoogleFonts.spaceGrotesk(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontSize: 14,
                   ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    "Log In",
+                    "log_in".tr,
                     style: GoogleFonts.spaceGrotesk(
                       color: primary,
                       fontWeight: FontWeight.bold,
@@ -183,7 +182,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
   Future<void> _handleSignUp() async {
     if (emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
-      _showSnackbar("Enter valid data!", Colors.red);
+      _showSnackbar("enter_valid_data".tr, Colors.red);
       return;
     }
 
@@ -194,10 +193,12 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
         password: passwordController.text.trim(),
       );
 
-      _showSnackbar("Sign up successful!", Colors.lightGreen);
-      Navigator.of(context).pop(); // go back after success
+      _showSnackbar("signup_successful".tr, Colors.lightGreen);
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     } on FirebaseAuthException catch (error) {
-      _showSnackbar(error.message ?? "Something went wrong!", Colors.red);
+      _showSnackbar(error.message ?? "error".tr, Colors.red);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -222,9 +223,9 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: primary.withOpacity(0.1),
+            color: primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: primary.withOpacity(0.5)),
+            border: Border.all(color: primary.withValues(alpha: 0.5)),
           ),
           child: Icon(Icons.eco, color: primary, size: 40),
         ),
@@ -261,7 +262,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
       style: GoogleFonts.spaceGrotesk(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: primary.withOpacity(0.7),
+        color: primary.withValues(alpha: 0.7),
         letterSpacing: 2,
       ),
     ),
@@ -292,10 +293,10 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
           controller: controller,
           style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.4)),
+            prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.4)),
             hintText: hint,
             hintStyle: GoogleFonts.spaceGrotesk(
-              color: Colors.white.withOpacity(0.25),
+              color: Colors.white.withValues(alpha: 0.25),
             ),
             filled: true,
             fillColor: fill,
@@ -334,7 +335,7 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
         Text(
           label,
           style: GoogleFonts.spaceGrotesk(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -345,18 +346,21 @@ class _KrishiAISignUpScreenState extends State<KrishiAISignUpScreen> {
           obscureText: !_isPasswordVisible,
           style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
-            prefixIcon: Icon(Icons.lock, color: Colors.white.withOpacity(0.4)),
+            prefixIcon: Icon(
+              Icons.lock,
+              color: Colors.white.withValues(alpha: 0.4),
+            ),
             suffixIcon: IconButton(
               onPressed: () =>
                   setState(() => _isPasswordVisible = !_isPasswordVisible),
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
               ),
             ),
             hintText: "••••••••",
             hintStyle: GoogleFonts.spaceGrotesk(
-              color: Colors.white.withOpacity(0.25),
+              color: Colors.white.withValues(alpha: 0.25),
             ),
             filled: true,
             fillColor: fill,

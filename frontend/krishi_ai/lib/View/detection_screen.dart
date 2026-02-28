@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:krishi_ai/View/home_screen.dart';
 import 'package:krishi_ai/View/debug_screen.dart';
+import 'package:krishi_ai/services/nearby_stores_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ResultScreen extends StatelessWidget {
   final File imageFile;
@@ -106,7 +108,6 @@ class ResultScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-
             // Disease Info
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,7 +200,6 @@ class ResultScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-
             // Treatment Section
             if (isHealthy != true) ...[
               Container(
@@ -239,8 +239,6 @@ class ResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Dosage Section
               if (dosage != null &&
                   dosage != "Not applicable" &&
                   dosage != "Not available")
@@ -255,7 +253,6 @@ class ResultScreen extends StatelessWidget {
                   dosage != "Not available")
                 const SizedBox(height: 16),
             ] else ...[
-              // Healthy crop message
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -296,8 +293,6 @@ class ResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
             ],
-
-            // Prevention Section
             if (prevention != null)
               _buildInfoCard(
                 icon: Icons.shield,
@@ -306,8 +301,6 @@ class ResultScreen extends StatelessWidget {
                 primary: primary,
               ),
             if (prevention != null) const SizedBox(height: 16),
-
-            // Symptoms Section (only for diseased crops)
             if (isHealthy != true)
               _buildInfoCard(
                 icon: Icons.warning_amber,
@@ -316,7 +309,6 @@ class ResultScreen extends StatelessWidget {
                 primary: primary,
               ),
             if (isHealthy != true) const SizedBox(height: 20),
-
             // Market Locator Button
             Container(
               width: double.infinity,
@@ -397,7 +389,6 @@ class ResultScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-
             // Action Buttons
             Row(
               children: [
@@ -429,7 +420,6 @@ class ResultScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // Save to history
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -532,7 +522,6 @@ class ResultScreen extends StatelessWidget {
       'Tomato__Tomato_mosaic_virus':
           '• Mottled light and dark green patterns\n• Leaf distortion and curling\n• Stunted growth\n• Reduced fruit quality',
     };
-
     return symptomsMap[label] ??
         '• Observe any unusual discoloration\n• Check for spots or lesions\n• Monitor plant growth patterns\n• Look for signs of pest activity';
   }
@@ -543,7 +532,71 @@ void _showMarketLocator(BuildContext context, Color primary) {
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => Container(
+    builder: (context) => _NearbyStoresSheet(primary: primary),
+  );
+}
+
+class _NearbyStoresSheet extends StatefulWidget {
+  final Color primary;
+
+  const _NearbyStoresSheet({required this.primary});
+
+  @override
+  State<_NearbyStoresSheet> createState() => _NearbyStoresSheetState();
+}
+
+class _NearbyStoresSheetState extends State<_NearbyStoresSheet> {
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<dynamic> _stores = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStores();
+  }
+
+  Future<void> _fetchStores() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      print('🏪 Fetching nearby stores...');
+      final data = await NearbyStoresService.fetchNearbyStores();
+
+      setState(() {
+        _stores = data['stores'] ?? [];
+        _isLoading = false;
+      });
+
+      print('✅ Successfully loaded ${_stores.length} stores');
+
+      if (data['note'] != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Showing sample stores - Create /nearby-stores endpoint for real data',
+              style: GoogleFonts.spaceGrotesk(fontSize: 12),
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error fetching stores: $e');
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       decoration: const BoxDecoration(
         color: Color(0xFF0A0F08),
@@ -554,7 +607,6 @@ void _showMarketLocator(BuildContext context, Color primary) {
       ),
       child: Column(
         children: [
-          // Handle bar
           Container(
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             width: 40,
@@ -564,7 +616,6 @@ void _showMarketLocator(BuildContext context, Color primary) {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          // Header
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -572,10 +623,10 @@ void _showMarketLocator(BuildContext context, Color primary) {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: primary.withValues(alpha: 0.15),
+                    color: widget.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.store, color: primary, size: 24),
+                  child: Icon(Icons.store, color: widget.primary, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -608,61 +659,132 @@ void _showMarketLocator(BuildContext context, Color primary) {
             ),
           ),
           const Divider(color: Colors.white12, height: 1),
-          // Store List
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildStoreCard(
-                  storeName: "Green Valley Agro Center",
-                  distance: "1.2 km",
-                  address: "Shop 12, Market Road, Mumbai",
-                  rating: "4.5",
-                  isOpen: true,
-                  phone: "+91 98765 43210",
-                  primary: primary,
-                  context: context,
-                ),
-                const SizedBox(height: 12),
-                _buildStoreCard(
-                  storeName: "Farmers Choice Pesticides",
-                  distance: "2.5 km",
-                  address: "Near Bus Stand, Andheri West",
-                  rating: "4.3",
-                  isOpen: true,
-                  phone: "+91 98765 43211",
-                  primary: primary,
-                  context: context,
-                ),
-                const SizedBox(height: 12),
-                _buildStoreCard(
-                  storeName: "Krishi Seva Kendra",
-                  distance: "3.8 km",
-                  address: "Main Market, Borivali",
-                  rating: "4.7",
-                  isOpen: false,
-                  phone: "+91 98765 43212",
-                  primary: primary,
-                  context: context,
-                ),
-                const SizedBox(height: 12),
-                _buildStoreCard(
-                  storeName: "Agri Solutions Hub",
-                  distance: "4.2 km",
-                  address: "Industrial Area, Malad",
-                  rating: "4.4",
-                  isOpen: true,
-                  phone: "+91 98765 43213",
-                  primary: primary,
-                  context: context,
-                ),
-              ],
-            ),
+            child: _isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: widget.primary),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Finding nearby stores...",
+                          style: GoogleFonts.spaceGrotesk(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _errorMessage != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Failed to load stores",
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.grey[400],
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _fetchStores,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text("Retry"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.primary,
+                              foregroundColor: const Color(0xFF0A0F08),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : _stores.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.store_outlined,
+                            color: Colors.grey[600],
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No stores found nearby",
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Try again or check your location settings",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.grey[400],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _fetchStores,
+                    color: widget.primary,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _stores.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final store = _stores[index];
+                        return _buildStoreCard(
+                          storeName: store['name'] ?? 'Unknown Store',
+                          distance: store['distance'] ?? 'N/A',
+                          address: store['address'] ?? 'Address not available',
+                          rating: store['rating']?.toString() ?? '0.0',
+                          isOpen: store['is_open'] ?? true,
+                          phone: store['phone'] ?? '',
+                          latitude: store['latitude'],
+                          longitude: store['longitude'],
+                          primary: widget.primary,
+                          context: context,
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
 
 Widget _buildStoreCard({
@@ -672,6 +794,8 @@ Widget _buildStoreCard({
   required String rating,
   required bool isOpen,
   required String phone,
+  double? latitude,
+  double? longitude,
   required Color primary,
   required BuildContext context,
 }) {
@@ -759,16 +883,14 @@ Widget _buildStoreCard({
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {
-                  // Open maps/navigation
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Opening navigation to $storeName",
-                        style: GoogleFonts.spaceGrotesk(),
-                      ),
-                      backgroundColor: primary,
-                    ),
+                onPressed: () async {
+                  await _openGoogleMaps(
+                    context,
+                    storeName,
+                    latitude,
+                    longitude,
+                    address,
+                    primary,
                   );
                 },
                 icon: const Icon(Icons.directions, size: 18),
@@ -786,18 +908,11 @@ Widget _buildStoreCard({
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {
-                  // Make phone call
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Calling $phone",
-                        style: GoogleFonts.spaceGrotesk(),
-                      ),
-                      backgroundColor: primary,
-                    ),
-                  );
-                },
+                onPressed: phone.isNotEmpty
+                    ? () async {
+                        await _makePhoneCall(context, phone, primary);
+                      }
+                    : null,
                 icon: const Icon(Icons.phone, size: 18),
                 label: const Text("Call"),
                 style: OutlinedButton.styleFrom(
@@ -815,4 +930,86 @@ Widget _buildStoreCard({
       ],
     ),
   );
+}
+
+Future<void> _openGoogleMaps(
+  BuildContext context,
+  String storeName,
+  double? latitude,
+  double? longitude,
+  String address,
+  Color primary,
+) async {
+  try {
+    Uri? mapsUri;
+
+    if (latitude != null && longitude != null) {
+      mapsUri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+      );
+    } else if (address.isNotEmpty) {
+      final encodedAddress = Uri.encodeComponent(address);
+      mapsUri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$encodedAddress',
+      );
+    }
+
+    if (mapsUri != null) {
+      print('🗺️ Opening Google Maps: $mapsUri');
+
+      if (await canLaunchUrl(mapsUri)) {
+        await launchUrl(mapsUri, mode: LaunchMode.externalApplication);
+        print('✅ Successfully opened Google Maps');
+      } else {
+        throw Exception('Could not launch Google Maps');
+      }
+    } else {
+      throw Exception('No location data available');
+    }
+  } catch (e) {
+    print('❌ Error opening Google Maps: $e');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Could not open Google Maps: $e",
+            style: GoogleFonts.spaceGrotesk(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+
+Future<void> _makePhoneCall(
+  BuildContext context,
+  String phone,
+  Color primary,
+) async {
+  try {
+    final telUri = Uri.parse('tel:$phone');
+
+    print('📞 Initiating call to: $phone');
+
+    if (await canLaunchUrl(telUri)) {
+      await launchUrl(telUri);
+      print('✅ Successfully initiated call');
+    } else {
+      throw Exception('Could not launch phone dialer');
+    }
+  } catch (e) {
+    print('❌ Error making phone call: $e');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Could not make call: $e",
+            style: GoogleFonts.spaceGrotesk(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 }

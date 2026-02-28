@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -9,6 +10,8 @@ import 'package:krishi_ai/View/gov_schemes_screen.dart';
 import 'package:krishi_ai/View/market_screen.dart';
 import 'package:krishi_ai/View/weather_advisory_screen.dart';
 import 'package:krishi_ai/widgets/chatbot_wrapper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../services/weather_advisory_service.dart';
 
 class KrishiAIDashboard extends StatefulWidget {
@@ -21,6 +24,15 @@ class KrishiAIDashboard extends StatefulWidget {
 class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
   int selectedIndex = 0;
   DateTime? lastPressedTime;
+
+  // GlobalKeys for tutorial
+  final GlobalKey scanDiseaseKey = GlobalKey();
+  final GlobalKey weatherKey = GlobalKey();
+  final GlobalKey mandiPricesKey = GlobalKey();
+  final GlobalKey schemesKey = GlobalKey();
+
+  // Tutorial coach mark
+  TutorialCoachMark? tutorialCoachMark;
 
   // Weather data
   bool _isLoadingWeather = true;
@@ -37,6 +49,426 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
   void initState() {
     super.initState();
     _fetchWeatherData();
+    _checkAndShowTutorial();
+  }
+
+  // Check if tutorial should be shown
+  Future<void> _checkAndShowTutorial() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorialSeen = prefs.getBool('tutorialSeen') ?? false;
+
+      print('🎓 Tutorial check: tutorialSeen = $tutorialSeen');
+
+      if (!tutorialSeen) {
+        print('🎓 Tutorial will be shown after delay');
+        // Show tutorial after the first frame is rendered
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            if (mounted) {
+              print('🎓 Showing tutorial now');
+              _showTutorial();
+            }
+          });
+        });
+      } else {
+        print('🎓 Tutorial already seen, skipping');
+      }
+    } catch (e) {
+      print('🎓 Error checking tutorial: $e');
+    }
+  }
+
+  // Create tutorial targets
+  void _createTutorial() {
+    tutorialCoachMark = TutorialCoachMark(
+      targets: _createTargets(),
+      colorShadow: Colors.black,
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('tutorialSeen', true);
+      },
+      onSkip: () {
+        _saveTutorialSeen();
+        return true;
+      },
+    );
+  }
+
+  // Save tutorial seen status
+  Future<void> _saveTutorialSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('tutorialSeen', true);
+  }
+
+  // Create target focuses for tutorial
+  List<TargetFocus> _createTargets() {
+    List<TargetFocus> targets = [];
+
+    // Target 1: Scan Disease Button (Top-Left)
+    targets.add(
+      TargetFocus(
+        identify: "scanDiseaseKey",
+        keyTarget: scanDiseaseKey,
+        alignSkip: Alignment.topRight,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(16),
+            builder: (context, controller) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2923),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "tutorial_scan_title".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF59F20D),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "tutorial_scan_desc".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            controller.skip();
+                          },
+                          child: Text(
+                            "tutorial_skip".tr,
+                            style: GoogleFonts.inter(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.next();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF59F20D),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            "tutorial_next".tr,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // Target 2: Weather Button (Middle-Left)
+    targets.add(
+      TargetFocus(
+        identify: "weatherKey",
+        keyTarget: weatherKey,
+        alignSkip: Alignment.topRight,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(16),
+            builder: (context, controller) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2923),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "tutorial_weather_title".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF59F20D),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "tutorial_weather_desc".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            controller.skip();
+                          },
+                          child: Text(
+                            "tutorial_skip".tr,
+                            style: GoogleFonts.inter(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.next();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF59F20D),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            "tutorial_next".tr,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // Target 3: Mandi Prices Button (Top-Right)
+    targets.add(
+      TargetFocus(
+        identify: "mandiPricesKey",
+        keyTarget: mandiPricesKey,
+        alignSkip: Alignment.topRight,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(16),
+            builder: (context, controller) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2923),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "tutorial_mandi_title".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF59F20D),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "tutorial_mandi_desc".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            controller.skip();
+                          },
+                          child: Text(
+                            "tutorial_skip".tr,
+                            style: GoogleFonts.inter(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.next();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF59F20D),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            "tutorial_next".tr,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    // Target 4: Government Schemes Button (Middle-Right)
+    targets.add(
+      TargetFocus(
+        identify: "schemesKey",
+        keyTarget: schemesKey,
+        alignSkip: Alignment.topRight,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            padding: const EdgeInsets.all(16),
+            builder: (context, controller) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2923),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF59F20D), width: 2),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "tutorial_schemes_title".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF59F20D),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "tutorial_schemes_desc".tr,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.next();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF59F20D),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            "tutorial_got_it".tr,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    return targets;
+  }
+
+  // Show tutorial
+  void _showTutorial() {
+    try {
+      print('🎓 Creating tutorial...');
+      _createTutorial();
+      print('🎓 Tutorial created, showing now...');
+      tutorialCoachMark?.show(context: context);
+      print('🎓 Tutorial show() called');
+    } catch (e) {
+      print('🎓 Error showing tutorial: $e');
+    }
   }
 
   Future<void> _fetchWeatherData() async {
@@ -131,10 +563,10 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
 
   String getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour >= 4 && hour < 12) return "Good Morning,";
-    if (hour >= 12 && hour < 17) return "Good Afternoon,";
-    if (hour >= 17 && hour < 21) return "Good Evening,";
-    return "Good Night,";
+    if (hour >= 4 && hour < 12) return "good_morning".tr;
+    if (hour >= 12 && hour < 17) return "good_afternoon".tr;
+    if (hour >= 17 && hour < 21) return "good_evening".tr;
+    return "good_night".tr;
   }
 
   @override
@@ -157,7 +589,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  "Press back again to exit",
+                  "press_back_again".tr,
                   style: GoogleFonts.inter(),
                 ),
                 duration: const Duration(seconds: 2),
@@ -428,9 +860,9 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceAround,
                                 children: [
-                                  _weatherDetail("Humidity", _humidity),
-                                  _weatherDetail("Wind", _windSpeed),
-                                  _weatherDetail("Rain", _rainChance),
+                                  _weatherDetail("humidity", _humidity),
+                                  _weatherDetail("wind", _windSpeed),
+                                  _weatherDetail("rain", _rainChance),
                                 ],
                               ),
                             ],
@@ -444,7 +876,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Quick Actions",
+                              "quick_actions".tr,
                               style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -452,7 +884,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                               ),
                             ),
                             Text(
-                              "Edit Grid",
+                              "edit_grid".tr,
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -472,9 +904,10 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                           physics: const NeverScrollableScrollPhysics(),
                           children: [
                             _DashboardButton(
+                              key: scanDiseaseKey,
                               icon: Icons.center_focus_strong,
-                              title: "Scan Disease",
-                              subtitle: "Detect crop issues",
+                              title: "scan_disease".tr,
+                              subtitle: "detect_crop_issues".tr,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -486,8 +919,8 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                             ),
                             _DashboardButton(
                               icon: Icons.smart_toy,
-                              title: "Advisory",
-                              subtitle: "Ask Krishi Bot",
+                              title: "advisory".tr,
+                              subtitle: "ask_krishi_bot".tr,
                               onTap: () {
                                 // Navigator.push(
                                 //   context,
@@ -498,9 +931,10 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                               },
                             ),
                             _DashboardButton(
+                              key: weatherKey,
                               icon: Icons.calendar_month,
-                              title: "Weather",
-                              subtitle: "5-day forecast",
+                              title: "weather".tr,
+                              subtitle: "five_day_forecast".tr,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -512,9 +946,10 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                               },
                             ),
                             _DashboardButton(
+                              key: mandiPricesKey,
                               icon: Icons.sell,
-                              title: "Mandi Prices",
-                              subtitle: "Live market rates",
+                              title: "mandi_prices".tr,
+                              subtitle: "live_market_rates".tr,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -525,9 +960,10 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
                               },
                             ),
                             _DashboardButton(
+                              key: schemesKey,
                               icon: Icons.policy,
-                              title: "Schemes",
-                              subtitle: "Govt. benefits",
+                              title: "schemes".tr,
+                              subtitle: "govt_benefits".tr,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -540,8 +976,8 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
 
                             _DashboardButton(
                               icon: Icons.history,
-                              title: "History",
-                              subtitle: "Past scans & data",
+                              title: "history".tr,
+                              subtitle: "past_scans_data".tr,
                               onTap: () {
                                 // Navigator.push(
                                 //   context,
@@ -572,7 +1008,7 @@ class _KrishiAIDashboardState extends State<KrishiAIDashboard> {
     return Column(
       children: [
         Text(
-          label.toUpperCase(),
+          label.tr.toUpperCase(),
           style: GoogleFonts.inter(
             fontSize: 10,
             color: Colors.grey[500],
@@ -601,6 +1037,7 @@ class _DashboardButton extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _DashboardButton({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,

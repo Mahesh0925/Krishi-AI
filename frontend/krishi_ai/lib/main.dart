@@ -1,7 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:krishi_ai/View/spalsh_screen.dart';
+import 'package:krishi_ai/controllers/language_controller.dart';
 import 'package:krishi_ai/services/crop_detection_service.dart';
+import 'package:krishi_ai/translations/app_translations.dart';
 import 'package:logger/logger.dart';
 
 final logger = Logger();
@@ -32,6 +35,9 @@ Future<void> main() async {
     logger.e('🚫 Failed to load crop detection model: $e');
   }
 
+  // Initialize language controller
+  Get.put(LanguageController());
+
   runApp(const MainApp());
 }
 
@@ -40,9 +46,14 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    final languageController = Get.find<LanguageController>();
+
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: KrishiAISplashScreen(),
+      translations: AppTranslations(),
+      locale: languageController.locale,
+      fallbackLocale: const Locale('en', 'US'),
+      home: const KrishiAISplashScreen(),
     );
   }
 }
